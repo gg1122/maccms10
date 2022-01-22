@@ -14,7 +14,7 @@ class Vod extends Base
         $param = input();
         $param['page'] = intval($param['page']) <1 ? 1 : $param['page'];
         $param['limit'] = intval($param['limit']) <1 ? $this->_pagesize : $param['limit'];
-
+        
         $where = [];
         if(!empty($param['type'])){
             $where['type_id|type_id_1'] = ['eq',$param['type']];
@@ -75,7 +75,7 @@ class Vod extends Base
         }
         if(!empty($param['player'])){
             if($param['player']=='no'){
-                $where['vod_play_from'] = ['eq',''];
+                $where['vod_play_from'] = [['eq', ''], ['eq', 'no'], 'or'];
             }
             else {
                 $where['vod_play_from'] = ['like', '%' . $param['player'] . '%'];
@@ -83,7 +83,7 @@ class Vod extends Base
         }
         if(!empty($param['downer'])){
             if($param['downer']=='no'){
-                $where['vod_down_from'] = ['eq',''];
+                $where['vod_down_from'] = [['eq', ''], ['eq', 'no'], 'or'];
             }
             else {
                 $where['vod_down_from'] = ['like', '%' . $param['downer'] . '%'];
@@ -100,7 +100,8 @@ class Vod extends Base
         if(!empty($param['repeat'])){
             if($param['page'] ==1){
                 Db::execute('DROP TABLE IF EXISTS '.config('database.prefix').'tmpvod');
-                Db::execute('CREATE TABLE IF NOT EXISTS `'.config('database.prefix').'tmpvod`  ENGINE=MyISAM as (SELECT min(vod_id) as id1,vod_name as name1 FROM '.config('database.prefix').'vod GROUP BY name1 HAVING COUNT(name1)>1)');
+                Db::execute('CREATE TABLE `'.config('database.prefix').'tmpvod` (`id1` int unsigned DEFAULT NULL, `name1` varchar(1024) NOT NULL DEFAULT \'\') ENGINE=MyISAM');
+                Db::execute('INSERT INTO `'.config('database.prefix').'tmpvod` (SELECT min(vod_id)as id1,vod_name as name1 FROM '.config('database.prefix').'vod GROUP BY name1 HAVING COUNT(name1)>1)');
             }
             $order='vod_name asc';
             $res = model('Vod')->listRepeatData($where,$order,$param['page'],$param['limit']);
@@ -131,20 +132,7 @@ class Vod extends Base
         $this->assign('type_tree',$type_tree);
 
         //播放器
-        $player_list = config('vodplayer');
-        $downer_list = config('voddowner');
-        $server_list = config('vodserver');
-
-        $player_list = mac_multisort($player_list,'sort',SORT_DESC,'status','1');
-        $downer_list = mac_multisort($downer_list,'sort',SORT_DESC,'status','1');
-        $server_list = mac_multisort($server_list,'sort',SORT_DESC,'status','1');
-
-
-        $this->assign('player_list',$player_list);
-        $this->assign('downer_list',$downer_list);
-        $this->assign('server_list',$server_list);
-
-
+        $this->assignBaseListByConfig();
         $this->assign('title',lang('admin/vod/title'));
         return $this->fetch('admin@vod/index');
     }
@@ -225,18 +213,18 @@ class Vod extends Base
             if(!empty($param['weekday'])){
                 $where['vod_weekday'] = ['like','%'.$param['weekday'].'%'];
             }
-            
+
             if(!empty($param['player'])){
                 if($param['player']=='no'){
-                    $where['vod_play_from'] = ['eq',''];
+                    $where['vod_play_from'] = [['eq', ''], ['eq', 'no'], 'or'];
                 }
                 else {
                     $where['vod_play_from'] = ['like', '%' . $param['player'] . '%'];
                 }
             }
             if(!empty($param['downer'])){
-                if($param['player']=='no'){
-                    $where['vod_down_from'] = ['eq',''];
+                if($param['downer']=='no'){
+                    $where['vod_down_from'] = [['eq', ''], ['eq', 'no'], 'or'];
                 }
                 else {
                     $where['vod_down_from'] = ['like', '%' . $param['downer'] . '%'];
@@ -369,20 +357,7 @@ class Vod extends Base
         $this->assign('type_tree',$type_tree);
 
         //播放器
-        $player_list = config('vodplayer');
-        $downer_list = config('voddowner');
-        $server_list = config('vodserver');
-
-        $player_list = mac_multisort($player_list,'sort',SORT_DESC,'status','1');
-        $downer_list = mac_multisort($downer_list,'sort',SORT_DESC,'status','1');
-        $server_list = mac_multisort($server_list,'sort',SORT_DESC,'status','1');
-
-
-        $this->assign('player_list',$player_list);
-        $this->assign('downer_list',$downer_list);
-        $this->assign('server_list',$server_list);
-
-
+        $this->assignBaseListByConfig();
         $this->assign('title',lang('admin/vod/title'));
         return $this->fetch('admin@vod/batch');
     }
@@ -423,22 +398,12 @@ class Vod extends Base
         $this->assign('group_list',$group_list);
 
         //播放器
-        $player_list = config('vodplayer');
-        $downer_list = config('voddowner');
-        $server_list = config('vodserver');
-
-        $player_list = mac_multisort($player_list,'sort',SORT_DESC,'status','1');
-        $downer_list = mac_multisort($downer_list,'sort',SORT_DESC,'status','1');
-        $server_list = mac_multisort($server_list,'sort',SORT_DESC,'status','1');
-
-        $this->assign('player_list',$player_list);
-        $this->assign('downer_list',$downer_list);
-        $this->assign('server_list',$server_list);
+        $this->assignBaseListByConfig();
 
         //播放组、下载租
-        $this->assign('vod_play_list',$info['vod_play_list']);
-        $this->assign('vod_down_list',$info['vod_down_list']);
-        $this->assign('vod_plot_list',$info['vod_plot_list']);
+        $this->assign('vod_play_list',(array)$info['vod_play_list']);
+        $this->assign('vod_down_list',(array)$info['vod_down_list']);
+        $this->assign('vod_plot_list',(array)$info['vod_plot_list']);
 
 
         $this->assign('title',lang('admin/vod/title'));
@@ -549,4 +514,15 @@ class Vod extends Base
         return json($res);
     }
 
+    private function assignBaseListByConfig() {
+        $player_list = config('vodplayer');
+        $downer_list = config('voddowner');
+        $server_list = config('vodserver');
+        $player_list = mac_multisort($player_list,'sort',SORT_DESC,'status','1');
+        $downer_list = mac_multisort($downer_list,'sort',SORT_DESC,'status','1');
+        $server_list = mac_multisort($server_list,'sort',SORT_DESC,'status','1');
+        $this->assign('player_list',$player_list);
+        $this->assign('downer_list',$downer_list);
+        $this->assign('server_list',$server_list);
+    }
 }

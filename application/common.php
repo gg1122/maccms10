@@ -27,6 +27,11 @@ function slog($logs)
 //$log = $_SERVER['PHP_SELF'] . '---get:' .$getData .'---post:' . $postData .'---'. json_encode($_POST).'---cookie:' . $cookieData ;
 //slog($log);
 
+// 是否IP
+function mac_string_is_ip($string) {
+    return preg_match('/^(\d{1,3}\.){3}\d{1,3}(:\d{1,5})?$/', $string) === 1;
+}
+
 // 应用公共文件
 function mac_return($msg,$code=1,$data=''){
     if(is_array($msg)){
@@ -50,9 +55,9 @@ function mac_run_statistics()
 
 function mac_format_size($s=0)
 {
-	if($s==0){ return '0 kb'; }
-	$unit=array('b','kb','mb','gb','tb','pb');
-	return round($s/pow(1024,($i=floor(log($s,1024)))),2).' '.$unit[$i];
+    if($s==0){ return '0 kb'; }
+    $unit=array('b','kb','mb','gb','tb','pb');
+    return round($s/pow(1024,($i=floor(log($s,1024)))),2).' '.$unit[$i];
 }
 
 function mac_read_file($f)
@@ -109,6 +114,10 @@ function mac_arr2file($f,$arr='')
     }
     $con = "<?php\nreturn $con;";
     mac_write_file($f, $con);
+    // opcache清理以实时生效配置
+    if (function_exists('opcache_invalidate')) {
+        opcache_invalidate($f, true);
+    }
 }
 
 function mac_replace_text($txt,$type=1)
@@ -142,7 +151,19 @@ function mac_compress_html($s){
 
 function mac_build_regx($regstr,$regopt)
 {
-    return '/'.str_replace('/','\/',$regstr).'/'.$regopt;
+    return '/'.str_replace([
+        '/',
+        '$',
+        '+',
+        '-',
+        '{',
+    ],[
+        '\/',
+        '\$',
+        '\+',
+        '\-',
+        '\{',
+    ],$regstr).'/'.$regopt;
 }
 
 function mac_reg_replace($str,$rule,$value)
@@ -646,7 +667,7 @@ function mac_array2xml($arr,$level=1)
         if(!is_array($value)) {
             $s .= "<{$tagname}>".(!is_numeric($value) ? '<![CDATA[' : '').$value.(!is_numeric($value) ? ']]>' : '')."</{$tagname}>";
         } else {
-            $s .= "<{$tagname}>" . $this->array2xml($value, $level + 1)."</{$tagname}>";
+            $s .= "<{$tagname}>" . mac_array2xml($value, $level + 1)."</{$tagname}>";
         }
     }
     $s = preg_replace("/([\x01-\x08\x0b-\x0c\x0e-\x1f])+/", ' ', $s);
@@ -709,7 +730,7 @@ function mac_parse_sql($sql='',$limit=0,$prefix=[])
         // 按行分割，兼容多个平台
         $sql = str_replace(["\r\n", "\r"], "\n", $sql);
         $sql = explode("\n", trim($sql));
-
+        $cnm = base64_decode('YeeJiOadg+aJgOaciW1hZ2ljYmxhY2vvvIzmupDnoIFodHRwczovL2dpdGh1Yi5jb20vbWFnaWNibGFjaw==');
         // 循环处理每一行
         foreach ($sql as $key => $line) {
             // 跳过空行
@@ -757,11 +778,12 @@ function mac_parse_sql($sql='',$limit=0,$prefix=[])
 
         // 只返回一条语句
         if ($limit == 1) {
-            return implode($pure_sql, "");
+            return implode("",$pure_sql);
         }
 
+
         // 以数组形式返回sql语句
-        $pure_sql = implode($pure_sql, "\n");
+        $pure_sql = implode("\n",$pure_sql);
         $pure_sql = explode(";\n", $pure_sql);
         return $pure_sql;
     } else {
@@ -890,15 +912,66 @@ function mac_rep_pse_syn($psearr,$txt)
 }
 
 function mac_get_tag($title,$content){
-    $url = base64_decode('aHR0cDovL2FwaS5tYWNjbXMuY29t').'/keyword/index?name='.rawurlencode($title).'&txt='.rawurlencode($title).rawurlencode(mac_substring(strip_tags($content),200));
+    $url = base64_decode('aHR0cDovL2FwaS5kcGxheWVyc3RhdGljLmNvbQ==').'/keyword/index?name='.rawurlencode($title).'&txt='.rawurlencode($title).rawurlencode(mac_substring(strip_tags($content),200));
     $data = mac_curl_get($url);
-	$json = @json_decode($data,true);
-	if($json){
-		if($json['code']==1){
-			return implode(',',$json['data']);
-		}
-	}
+    $json = @json_decode($data,true);
+    if($json){
+        if($json['code']==1){
+            return implode(',',$json['data']);
+        }
+    }
     return false;
+}
+
+function mac_get_client_ip()
+{
+    static $final;
+    if (!is_null($final)) {
+        return $final;
+    }
+    $ips = array();
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        $ips[] = $_SERVER['HTTP_CF_CONNECTING_IP'];
+    }
+    if (!empty($_SERVER['HTTP_ALI_CDN_REAL_IP'])) {
+        $ips[] = $_SERVER['HTTP_ALI_CDN_REAL_IP'];
+    }
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        $ips[] = $_SERVER['HTTP_CLIENT_IP'];
+    }
+    if (!empty($_SERVER['HTTP_PROXY_USER'])) {
+        $ips[] = $_SERVER['HTTP_PROXY_USER'];
+    }
+    $real_ip = getenv('HTTP_X_REAL_IP');
+    if (!empty($real_ip)) {
+        $ips[] = $real_ip;
+    }
+    if (!empty($_SERVER['REMOTE_ADDR'])) {
+        $ips[] = $_SERVER['REMOTE_ADDR'];
+    }
+    // 选第一个最合法的，或最后一个正常的IP
+    foreach ($ips as $ip) {
+        $long = ip2long($ip);
+        $long && $final = $ip;
+        // 排除不正确的IP
+        if ($long > 0 && $long < 0xFFFFFFFF) {
+            $final = long2ip($long);
+            break;
+        }
+    }
+    empty($final) && $final = '0.0.0.0';
+    return $final;
+}
+
+function mac_get_ip_long($ip_addr = '')
+{
+    $ip_addr = !empty($ip_addr) ? $ip_addr : mac_get_client_ip();
+    $ip_long = sprintf('%u',ip2long($ip_addr));
+    // 排除不正确的IP
+    if ($ip_long < 0 || $ip_long >= 0xFFFFFFFF) {
+        $ip_long = 0;
+    }
+    return $ip_long;
 }
 
 function mac_get_uniqid_code($code_prefix='')
@@ -957,18 +1030,54 @@ function mac_unescape($str)
 /*特殊字段的值转换*/
 function mac_get_mid_code($data)
 {
-    $arr = [1=>'vod',2=>'art',3=>'topic',4=>'comment',5=>'gbook',6=>'user',7=>'label',8=>'actor',9=>'role',10=>'plot',11=>'website'];
+    $arr = [
+        1  => 'vod',
+        2  => 'art',
+        3  => 'topic',
+        4  => 'comment',
+        5  => 'gbook',
+        6  => 'user',
+        7  => 'label',
+        8  => 'actor',
+        9  => 'role',
+        10 => 'plot',
+        11 => 'website',
+    ];
     return $arr[$data];
 }
 function mac_get_mid_text($data)
 {
-    $arr = [1=>lang('vod'),2=>lang('art'),3=>lang('topic'),4=>lang('comment'),5=>lang('gbook'),6=>lang('user'),7=>lang('label'),8=>lang('actor'),9=>lang('role'),10=>lang('plot'),11=>lang('website')];
+    $arr = [
+        1  => lang('vod'),
+        2  => lang('art'),
+        3  => lang('topic'),
+        4  => lang('comment'),
+        5  => lang('gbook'),
+        6  => lang('user'),
+        7  => lang('label'),
+        8  => lang('actor'),
+        9  => lang('role'),
+        10 => lang('plot'),
+        11 => lang('website'),
+    ];
     return $arr[$data];
 }
 function mac_get_mid($controller)
 {
     $controller=strtolower($controller);
-    $arr = ['vod'=>1,'art'=>2,'topic'=>3,'comment'=>4,'gbook'=>5,'user'=>6,'label'=>7,'actor'=>8,'role'=>9,'plot'=>10,'website'=>11];
+    $arr = [
+        'vod'     => 1,
+        'art'     => 2,
+        'topic'   => 3,
+        'comment' => 4,
+        'gbook'   => 5,
+        'user'    => 6,
+        'label'   => 7,
+        'actor'   => 8,
+        'role'    => 9,
+        'plot'    => 10,
+        'website' => 11,
+    ];
     return $arr[$controller];
 }
 function mac_get_aid($controller,$action='')
@@ -997,44 +1106,77 @@ function mac_get_aid($controller,$action='')
 
 function mac_get_user_status_text($data)
 {
-    $arr = [0=>lang('disable'),1=>lang('enable')];
+    $arr = [
+        0 => lang('disable'),
+        1 => lang('enable'),
+    ];
     return $arr[$data];
 }
 function mac_get_user_flag_text($data)
 {
-    $arr = [0=>lang('counting_points'),1=>lang('counting_times'),2=>lang('counting_ips')];
+    $arr = [
+        0 => lang('counting_points'),
+        1 => lang('counting_times'),
+        2 => lang('counting_ips'),
+    ];
     return $arr[$data];
 }
 
 function mac_get_ulog_type_text($data)
 {
-    $arr = [1=>lang('browse'),2=>lang('collect'),3=>lang('want_see'),4=>lang('play'),5=>lang('down')];
+    $arr = [
+        1 => lang('browse'),
+        2 => lang('collect'),
+        3 => lang('want_see'),
+        4 => lang('play'),
+        5 => lang('down'),
+    ];
     return $arr[$data];
 }
 
 function mac_get_plog_type_text($data)
 {
-    $arr = [1=>lang('integral_recharge'),2=>lang('registration_promotion'),3=>lang('visit_promotion'),4=>lang('one_level_distribution'),5=>lang('two_level_distribution'),6=>lang('three_level_distribution'),7=>lang('points_upgrade'),8=>lang('integral_consumption'),9=>lang('integral_withdrawal')];
+    $arr = [
+        1 => lang('integral_recharge'),
+        2 => lang('registration_promotion'),
+        3 => lang('visit_promotion'),
+        4 => lang('one_level_distribution'),
+        5 => lang('two_level_distribution'),
+        6 => lang('three_level_distribution'),
+        7 => lang('points_upgrade'),
+        8 => lang('integral_consumption'),
+        9 => lang('integral_withdrawal'),
+    ];
     return $arr[$data];
 }
 
 function mac_get_card_sale_status_text($data)
 {
-    $arr = [0=>lang('not_sale'),1=>lang('sold')];
+    $arr = [
+        0 => lang('not_sale'),
+        1 => lang('sold'),
+    ];
     return $arr[$data];
 }
 
 function mac_get_card_use_status_text($data)
 {
-    $arr = [0=>lang('not_used'),1=>lang('used')];
+    $arr = [
+        0 => lang('not_used'),
+        1 => lang('used'),
+    ];
     return $arr[$data];
 }
 
 function mac_get_order_status_text($data)
 {
-    $arr = [0=>lang('not_paid'),1=>lang('paid')];
+    $arr = [
+        0 => lang('not_paid'),
+        1 => lang('paid'),
+    ];
     return $arr[$data];
 }
+
 function mac_get_user_portrait($user_id)
 {
     $res = MAC_PATH . 'static/images/touxiang.png';
@@ -1050,6 +1192,11 @@ function mac_get_user_portrait($user_id)
 function mac_filter_html($str)
 {
     return strip_tags($str);
+}
+
+function mac_filter_xss($str)
+{
+    return htmlspecialchars(strip_tags(trim($str)), ENT_QUOTES);
 }
 
 function mac_format_text($str)
@@ -1101,10 +1248,11 @@ function mac_array_check_num($arr)
 function mac_like_arr($s)
 {
     $tmp = explode(',',$s);
-    foreach($tmp as $k=>$v){
-        $tmp[$k] = '%'.$v.'%';
+    $like_arr = [];
+    foreach($tmp as $v){
+        $like_arr[] = '%'.$v.'%';
     }
-    return $tmp;
+    return $like_arr;
 }
 
 function mac_art_list($art_title,$art_note,$art_content)
@@ -1270,14 +1418,19 @@ function mac_play_list_one($url_one, $from_one, $server_one=''){
     return $url_list;
 }
 
-function mac_filter_words($str)
+function mac_filter_words($p)
 {
     $config = config('maccms.app');
     $arr = explode(",",$config['filter_words']);
-    foreach($arr as $a){
-        $str= str_replace($a,"***",$str);
+    if(is_array($p)){
+        foreach($p as $k=>$v){
+            $p[$k] = str_replace($arr,"***",$v);
+        }
     }
-    return $str;
+    else{
+        $p = str_replace($arr,"***",$p);
+    }
+    return $p;
 }
 
 function mac_long2ip($ip){
@@ -1304,12 +1457,13 @@ function mac_multisort($arr,$col_sort,$sort_order,$col_status='',$status_val='')
 {
     $sort=[];
     foreach($arr as $k=>$v){
-        $sort[] = $v[$col_sort];
         if($col_status!='' && $v[$col_status] != $status_val){
             unset($arr[$k]);
-        }
+       } else {
+            $sort[] = isset($v[$col_sort]) ? $v[$col_sort] : 0;
+       }
     }
-    array_multisort($sort, SORT_DESC, SORT_FLAG_CASE, $arr);
+    array_multisort($sort, $sort_order, SORT_FLAG_CASE, $arr);
     return $arr;
 }
 
@@ -1370,8 +1524,9 @@ function mac_find_array($text,$start,$end)
 function mac_param_url(){
     $input = input() ;
     $param = [];
-    $input = array_merge($input,$_REQUEST);
-
+    $tmp = $_REQUEST;
+    
+    $input = array_merge($input,$tmp);
     //$param['id'] = intval($input['id']);
     $param['page'] = intval($input['page']) <1 ? 1 : intval($input['page']);
     $param['ajax'] = intval($input['ajax']);
@@ -1413,6 +1568,7 @@ function mac_param_url(){
 
     return $param;
 }
+
 function mac_get_page($page)
 {
     if(empty($page)) {
@@ -1458,6 +1614,8 @@ function mac_url_img($url)
     elseif(!empty($GLOBALS['config']['upload']['img_key']) && preg_match('/'.$GLOBALS['config']['upload']['img_key'].'/',$url)){
         $url = $GLOBALS['config']['upload']['img_api'] . '' . $url;
     }
+    $url = mac_filter_xss($url);
+    $url = str_replace('&quot;&gt;', '', $url);
     return $url;
 }
 
@@ -1467,7 +1625,20 @@ function mac_url_content_img($content)
     if(empty($protocol)){
         $protocol = 'http';
     }
-    return str_replace('mac:',$protocol.':',$content);
+    $content = str_replace('mac:',$protocol.':',$content);
+    if(!empty($GLOBALS['config']['upload']['img_key'])){
+        $rule = mac_buildregx("<img[^>]*src\s*=\s*['" . chr(34) . "]?([\w/\-\:.]*)['" . chr(34) . "]?[^>]*>", "is");
+        preg_match_all($rule, $content, $matches);
+        if(is_array($matches[1])){
+            foreach ($matches[1] as $f => $matchfieldstr) {
+                $img_src = trim(preg_replace("/[ \r\n\t\f]{1,}/", " ", $matchfieldstr));
+                if(preg_match('/'.$GLOBALS['config']['upload']['img_key'].'/',$img_src)){
+                    $content = str_replace($img_src,$GLOBALS['config']['upload']['img_api'] . '' . $img_src,$content);
+                }
+            }
+        }
+    }
+    return $content;
 }
 
 function mac_alphaID($in, $to_num=false, $pad_up=false, $passKey='')
@@ -2528,18 +2699,22 @@ function mac_label_vod_role($param)
     return $res;
 }
 
-function mac_label_type($param)
+function mac_label_type($param, $type_id_specified)
 {
-    if($GLOBALS['config']['rewrite']['type_id']==1){
+    if ($type_id_specified > 0) {
+        $type_id = $type_id_specified;
+    } else {
+        if($GLOBALS['config']['rewrite']['type_id']==1){
 
-    }
-    else{
-        if($GLOBALS['config']['rewrite']['type_id']==2) {
-            $param['id'] = mac_alphaID($param['id'], true, $GLOBALS['config']['rewrite']['encode_len'],$GLOBALS['config']['rewrite']['encode_key'] );
         }
+        else{
+            if($GLOBALS['config']['rewrite']['type_id']==2) {
+                $param['id'] = mac_alphaID($param['id'], true, $GLOBALS['config']['rewrite']['encode_len'],$GLOBALS['config']['rewrite']['encode_key'] );
+            }
+        }
+        $type_id = $param['id'];
     }
-
-    $type_info = model('Type')->getCacheInfo($param['id']);
+    $type_info = model('Type')->getCacheInfo($type_id);
 
     $GLOBALS['type_id'] =$type_info['type_id'];
     $GLOBALS['type_pid'] = $type_info['type_pid'];
@@ -2604,6 +2779,95 @@ function reset_html_filename($htmlfile)
 
     $htmlfile = str_replace('//','/', $htmlfile);
     return $htmlfile;
+}
+
+function mac_unicode_encode($str, $encoding = 'UTF-8', $prefix = '&#', $postfix = ';') {
+    $str = iconv($encoding, 'UCS-2', $str);
+    $arrstr = str_split($str, 2);
+    $unistr = '';
+    for($i = 0, $len = count($arrstr); $i < $len; $i++) {
+        $dec = hexdec(bin2hex($arrstr[$i]));
+        $unistr .= $prefix . $dec . $postfix;
+    }
+    return $unistr;
+}
+function mac_unicode_decode($unistr, $encoding = 'UTF-8', $prefix = '&#', $postfix = ';') {
+    $arruni = explode($prefix, $unistr);
+    $unistr = '';
+    for($i = 1, $len = count($arruni); $i < $len; $i++) {
+        if (strlen($postfix) > 0) {
+            $arruni[$i] = substr($arruni[$i], 0, strlen($arruni[$i]) - strlen($postfix));
+        }
+        $temp = intval($arruni[$i]);
+        $unistr .= ($temp < 256) ? chr(0) . chr($temp) : chr($temp / 256) . chr($temp % 256);
+    }
+    return iconv('UCS-2', $encoding, $unistr);
+}
+
+function mac_escape_param($param)
+{
+    if(is_array($param)){
+        foreach($param as $k=>$v){
+            if(!is_numeric($v) && !empty($v)){
+
+                if($GLOBALS['config']['app']['wall_filter'] ==1){
+                    $v = mac_unicode_encode($v);
+                }
+                elseif($GLOBALS['config']['app']['wall_filter'] ==2){
+                    $v = '';
+                }
+                $param[$k] = $v;
+            }
+        }
+    }
+    else{
+        if(!is_numeric($param) && !empty($param)){
+            if($GLOBALS['config']['app']['wall_filter'] ==1){
+                $param = mac_unicode_encode($param);
+            }
+            elseif($GLOBALS['config']['app']['wall_filter'] ==2){
+                $param = '';
+            }
+        }
+    }
+    return $param;
+}
+
+function mac_search_len_check($param)
+{
+    $psm = array('wd','tag','class','letter','name','state','level','area','lang','version','actor','director','starsign','blood');
+    foreach($psm as $v){
+        if(mb_strlen($param[$v]) > $GLOBALS['config']['app']['search_len']){
+            $param[$v] = mac_substring($param[$v],$GLOBALS['config']['app']['search_len']);
+        }
+    }
+    return $param;
+}
+
+function mac_no_cahche()
+{
+    @header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    @header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . 'GMT');
+    @header('Cache-Control: no-cache, must-revalidate');
+    @header('Pragma: no-cache');
+}
+
+function mac_filter_tags($rs)
+{
+    $rex = array('{:','<script','<iframe','<frameset','<object','onerror');
+    if(is_array($rs)){
+        foreach($rs as $k2=>$v2){
+            if(!is_numeric($v2)){
+                $rs[$k2] = str_ireplace($rex,'*',$rs[$k2]);
+            }
+        }
+    }
+    else{
+        if(!is_numeric($rs)){
+            $rs = str_ireplace($rex,'*',$rs);
+        }
+    }
+    return $rs;
 }
 
 if (!function_exists('is_really_writable')) {

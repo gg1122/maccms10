@@ -18,15 +18,16 @@ class Plot extends Base
     {
         $param = mac_param_url();
         $this->check_search($param);
-        $this->assign('param',$param);
+        $this->label_search($param);
         return $this->label_fetch('plot/search');
     }
 
     public function ajax_search()
     {
         $param = mac_param_url();
-        $this->check_search($param);
-        $this->assign('param',$param);
+        $this->check_ajax();
+        $this->check_search($param,1);
+        $this->label_search($param);
         return $this->label_fetch('plot/ajax_search');
     }
 
@@ -38,6 +39,7 @@ class Plot extends Base
 
     public function ajax_detail()
     {
+        $this->check_ajax();
         $info = $this->label_vod_detail();
         return $this->label_fetch('plot/ajax_detail');
     }

@@ -1,5 +1,6 @@
 <?php
 namespace app\admin\controller;
+use http\Cookie;
 use think\Db;
 use think\Config;
 use think\Cache;
@@ -29,6 +30,7 @@ class System extends Base
         View::instance()->assign(['code'=>$code,'time'=>$GLOBALS['config']['email']['time']]);
         $title =  View::instance()->display($title);
         $msg =  View::instance()->display($msg);
+        $msg = htmlspecialchars_decode($msg);
         $res = mac_send_mail($to, $title, $msg, $conf);
         if ($res['code']==1) {
             return json(['code' => 1, 'msg' => lang('test_ok')]);
@@ -60,8 +62,7 @@ class System extends Base
     public function config()
     {
         if (Request()->isPost()) {
-            $config = input();
-
+            $config = input('','','htmlentities');
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
                 return $this->error($validate->getError());
@@ -105,6 +106,7 @@ class System extends Base
                 unset($tmp,$tmp2);
             }
 
+            $config['site']['site_tj'] = html_entity_decode($config['site']['site_tj']);
             $config_new['site'] = $config['site'];
             $config_new['app'] = $config['app'];
             $config_new['extra'] = $config['extra'];
@@ -118,7 +120,6 @@ class System extends Base
                 $tj = 'document.write(\'' . str_replace("'","\'",$tj) . '\')';
             }
             $res = @fwrite(fopen('./static/js/tj.js', 'wb'), $tj);
-
 
             $res = mac_arr2file(APP_PATH . 'extra/maccms.php', $config_new);
             if ($res === false) {
@@ -147,6 +148,10 @@ class System extends Base
         $this->assign('editors',$editors);
 
         $config = config('maccms');
+        // 默认get+post
+        if (!isset($config['app']['input_type'])) {
+            $config['app']['input_type'] = 1;
+        }
         $this->assign('config', $config);
         $this->assign('title', lang('admin/system/config/title'));
         return $this->fetch('admin@system/config');
@@ -213,9 +218,9 @@ class System extends Base
                 if (strpos($r, '=>') !== false) {
                     $a = explode('=>', $r);
                     $rule = [];
-                    if (strpos($a, ':id') !== false) {
+//                    if (strpos($a, ':id') !== false) {
                         //$rule['id'] = '\w+';
-                    }
+//                    }
                     $route[trim($a[0])] = [trim($a[1]), [], $rule];
                 }
             }
@@ -243,7 +248,7 @@ class System extends Base
     public function configuser()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -270,7 +275,7 @@ class System extends Base
     public function configupload()
     {
         if (Request()->isPost()){
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -302,7 +307,7 @@ class System extends Base
     public function configcomment()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -331,7 +336,7 @@ class System extends Base
     public function configweixin()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -359,7 +364,7 @@ class System extends Base
     public function configpay()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -392,7 +397,7 @@ class System extends Base
     public function configconnect()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -420,7 +425,7 @@ class System extends Base
     public function configemail()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -451,7 +456,7 @@ class System extends Base
     public function configsms()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -483,7 +488,7 @@ class System extends Base
     public function configapi()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -515,7 +520,7 @@ class System extends Base
     public function configinterface()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -553,7 +558,7 @@ class System extends Base
     public function configcollect()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
                 return $this->error($validate->getError());
@@ -644,7 +649,7 @@ class System extends Base
     public function configplay()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){
@@ -693,7 +698,7 @@ class System extends Base
     public function configseo()
     {
         if (Request()->isPost()) {
-            $config = input();
+            $config = input('','','htmlentities');
 
             $validate = \think\Loader::validate('Token');
             if(!$validate->check($config)){

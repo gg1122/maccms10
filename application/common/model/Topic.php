@@ -92,10 +92,10 @@ class Topic extends Base {
         if(!in_array($paging, ['yes', 'no'])) {
             $paging = 'no';
         }
-
+        $param = mac_param_url();
         if($paging=='yes') {
+            $param = mac_search_len_check($param);
             $totalshow = 1;
-            $param = mac_param_url();
             if (!empty($param['id'])) {
                 $ids = intval($param['id']);
             }
@@ -380,6 +380,35 @@ class Topic extends Base {
             $data['topic_time'] = time();
         }
         unset($data['uptime']);
+
+        // xss过滤
+        $filter_fields = [
+            'topic_name',
+            'topic_en',
+            'topic_sub',
+            'topic_color',
+            'topic_tpl',
+            'topic_type',
+            'topic_pic',
+            'topic_pic_thumb',
+            'topic_pic_slide',
+            'topic_key',
+            'topic_des',
+            'topic_title',
+            'topic_blurb',
+            'topic_remarks',
+            'topic_tag',
+            'topic_rel_vod',
+            'topic_rel_art',
+            'topic_content',
+            'topic_extend',
+        ];
+        foreach ($filter_fields as $filter_field) {
+            if (!isset($data[$filter_field])) {
+                continue;
+            }
+            $data[$filter_field] = mac_filter_xss($data[$filter_field]);
+        }
 
         if(!empty($data['topic_id'])){
             $where=[];

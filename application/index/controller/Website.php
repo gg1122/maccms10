@@ -22,12 +22,15 @@ class Website extends Base
 
     public function show()
     {
+        $this->check_show();
         $info = $this->label_type();
         return $this->label_fetch( mac_tpl_fetch('website',$info['type_tpl_list'],'show') );
     }
 
     public function ajax_show()
     {
+        $this->check_ajax();
+        $this->check_show(1);
         $info = $this->label_type();
         return $this->label_fetch('website/ajax_show');
     }
@@ -36,15 +39,16 @@ class Website extends Base
     {
         $param = mac_param_url();
         $this->check_search($param);
-        $this->assign('param',$param);
+        $this->label_search($param);
         return $this->label_fetch('website/search');
     }
 
     public function ajax_search()
     {
         $param = mac_param_url();
-        $this->check_search($param);
-        $this->assign('param',$param);
+        $this->check_ajax();
+        $this->check_search($param,1);
+        $this->label_search($param);
         return $this->label_fetch('website/ajax_search');
     }
 
@@ -56,6 +60,7 @@ class Website extends Base
 
     public function ajax_detail()
     {
+        $this->check_ajax();
         $info = $this->label_website_detail();
         return $this->label_fetch('website/ajax_detail');
     }
@@ -64,11 +69,6 @@ class Website extends Base
     {
         $info = $this->label_website_detail();
         return $this->label_fetch('website/rss');
-    }
-
-    public function saveData()
-    {
-
     }
 
 }

@@ -7,7 +7,7 @@
 *內部處理key：開頭 model/、controller/、只在模塊內使用
 */
 return [
-    'lang_ver'=>'1073+',
+    'lang_ver'=>'3021+',
     'hello'  => '歡迎使用',
     'maccms_name'=>'蘋果CMS-v10',
     'maccms_copyright'=>'© MacCMS All Rights Reserved.',
@@ -32,7 +32,7 @@ return [
     'status'=>'狀態',
     'status_parse'=>'解析狀態',
     'test'=>'測試',
-    'copy'=>'復制',
+    'copy'=>'復製',
     'run'=>'執行',
     'run_ok'=>'執行成功',
     'skip'=>'跳過',
@@ -226,7 +226,6 @@ return [
     'birthday'=>'生日',
     'starsign'=>'星座',
     'school'=>'畢業學校',
-    'author'=>'作者',
     'view'=>'查看',
     'multi_set'=>'批量設置',
     'multi_separate_tip'=>'多個用,號分隔',
@@ -283,6 +282,7 @@ return [
     'opt_err'=>'操作失敗',
     'update_ok'=>'更新成功',
     'update_err'=>'更新失敗',
+    'follow_global'=>'跟隨全局',
 
     'btn_save' =>'保 存',
     'btn_reset' =>'還 原',
@@ -457,6 +457,8 @@ return [
 
     'page_not_found'=>'頁面不存在',
     'search_close'=>'搜索功能關閉中',
+    'show_close'=>'篩選頁功能關閉中',
+    'ajax_close'=>'ajax頁功能關閉中',
     'frequently'=>'請不要頻繁操作',
     'search_frequently'=>'請不要頻繁操作，搜索時間間隔為',
     'score_ok'=>'感謝您的參與，評分成功',
@@ -581,7 +583,8 @@ https://www.baidu.com/123.jpg
     'menu/apps'=>'應用',
     'menu/addon'=>'應用市場',
     'menu/urlsend'=>'URL推送',
-
+    'menu/safety_file'=>'文件安全檢測',
+    'menu/safety_data'=>'數據掛馬檢測',
 
     'model/admin/update_login_err'=>'更新登錄信息失敗',
     'model/admin/login_ok'=>'登錄成功',
@@ -599,6 +602,7 @@ https://www.baidu.com/123.jpg
     'model/cash/mush_money_err'=>'提現太多了,沒有這麽多積分哦！',
 
     'model/collect/flag_err'=>'flag標識錯誤，請勿非法請求！',
+    'model/collect/cjurl_err'=>'採集鏈接有誤或不能為本地鏈接',
     'model/collect/get_html_err'=>'連接API接口失敗，通常為服務器網絡不穩定、IP被封、禁用相關函數！',
     'model/collect/json_err'=>'JSON格式不正確，不支持采集',
     'model/collect/xml_err'=>'XML格式不正確，不支持采集',
@@ -647,7 +651,7 @@ https://www.baidu.com/123.jpg
     'model/user/haved_reg'=>'用戶名已被註冊，請更換',
     'model/user/name_contain'=>'用戶名只能包含字母和數字，請更換',
     'model/user/name_filter'=>'用戶名禁止包含：%s等字符，請重試',
-    'model/user/ip_limit'=> '每IP每日限制註冊%s次',
+    'model/user/ip_limit'=> '每IP每日限製註冊%s次',
     'model/user/phone_haved'=> '手機號已被使用，請更換',
     'model/user/email_haved'=> '郵箱已被使用，請更換',
     'model/user/reg_err'=> '註冊失敗，請重試',
@@ -763,7 +767,7 @@ https://www.baidu.com/123.jpg
     'admin/index/login/verify_pass'=>'請輸入密碼',
     'admin/index/login/verify_verify'=>'請輸入驗證碼',
 
-    'admin/index/index/name' =>'超級控制臺',
+    'admin/index/index/name' =>'超級控製臺',
     'admin/index/index/menu_switch' =>'打開/關閉左側導航',
     'admin/index/index/menu_index' =>'網站首頁',
     'admin/index/index/menu_lock' =>'鎖屏操作',
@@ -789,7 +793,7 @@ https://www.baidu.com/123.jpg
     'admin/index/welcome/filed_host' =>'服務器IP/端口',
     'admin/index/welcome/filed_php_ver' =>'PHP版本',
     'admin/index/welcome/filed_thinkphp_ver' =>'ThinkPHP版本',
-    'admin/index/welcome/filed_max_upload' =>'最大上傳限制',
+    'admin/index/welcome/filed_max_upload' =>'最大上傳限製',
     'admin/index/welcome/filed_date' =>'服務器日期',
     'admin/index/welcome/filed_ver' =>'程序版本',
     'admin/index/welcome/filed_license' =>'授權類型',
@@ -853,6 +857,10 @@ https://www.baidu.com/123.jpg
     'admin/system/config/xhx'=>'下橫線_',
     'admin/system/config/suffix'=>'頁面後綴名',
 
+    'admin/system/config/wall_filter'=>'假墻防禦',
+    'admin/system/config/wall_unicode'=>'編碼方式',
+    'admin/system/config/wall_blank'=>'空白方式',
+    'admin/system/config/wall_filter_tip'=>'開啟後將部分頁面傳入參數在頁面展示時編碼或替換為空解決假墻威脅',
     'admin/system/config/popedom_filter'=>'數據權限過濾',
     'admin/system/config/popedom_filter_tip'=>'開啟後將隱藏沒有權限的分類和數據',
     'admin/system/config/cache_type'=>'緩存方式',
@@ -876,11 +884,19 @@ https://www.baidu.com/123.jpg
     'admin/system/config/cache_time_page'=>'頁面緩存時間',
     'admin/system/config/compress'=>'壓縮頁面',
     'admin/system/config/search'=>'搜索開關',
+    'admin/system/config/search_verify'=>'搜索驗證碼',
     'admin/system/config/search_timespan'=>'搜索間隔',
     'admin/system/config/search_timespan_tip'=>'單位秒，建議設置為3秒以上',
+    'admin/system/config/search_len'=>'搜索參數長度',
+    'admin/system/config/search_len_tip'=>'搜索頁+篩選頁單個參數長度限製,默認10個字符,超過自動截取。',
     'admin/system/config/404'=>'404頁面',
     'admin/system/config/404_tip'=>'自定義404頁面，頁面放在模板的public目錄下無需後綴名，默認為jump',
-
+    'admin/system/config/show'=>'篩選頁開關',
+    'admin/system/config/show_verify'=>'篩選驗證碼',
+    'admin/system/config/input_type'=>'參數獲取方式',
+    'admin/system/config/input_type_tip'=>'建議采用get方式，安全並且容易分析日誌',
+    'admin/system/config/ajax_page'=>'預留ajax開關',
+    'admin/system/config/ajax_page_tip'=>'系統每個頁面請求都預留對應的ajax方法，不需要建議關閉。例如：vod/search和vod/ajax_search',
     'admin/system/config/search_vod_rule'=>'視頻搜索規則',
     'admin/system/config/search_rule_tip'=>'註意，僅影響wd參數，勾選過多影響性能，建議3個以內',
     'admin/system/config/search_art_rule'=>'文章搜索規則',
@@ -919,7 +935,7 @@ https://www.baidu.com/123.jpg
     'admin/system/config/vod_extend_year'=>'視頻年代',
     'admin/system/config/actor_extend_area'=>'演員地區',
     'admin/system/config/filter_words'=>'詞語過濾',
-    'admin/system/config/filter_words_tip'=>'用戶交互如評論留言的禁用詞匯；多個用,號分隔',
+    'admin/system/config/filter_words_tip'=>'應用於搜索參數、評論、留言的禁用詞匯；多個用,號分隔',
     'admin/system/config/extra_var'=>'自定義參數',
     'admin/system/config/extra_var_tip'=>'每行一個變量,例如aa$$$我是老王；模板調用方法$GLOBALS[\'config\'][\'extra\'][\'aa\']',
     'admin/system/config/test_err'=>'發生錯誤，請檢查是否開啟擴展庫和配置項!',
@@ -1125,7 +1141,7 @@ https://www.baidu.com/123.jpg
     'admin/system/configplay/flag_tip'=>'本地播放器',
     'admin/system/configplay/colors'=>'播放器顏色',
     'admin/system/configplay/select_colors'=>'選擇顏色',
-    'admin/system/configplay/select_colors_tip'=>'顏色使用16進制表示法，不帶#號，以逗號分割，一共15個可配置顏色!
+    'admin/system/configplay/select_colors_tip'=>'顏色使用16進製表示法，不帶#號，以逗號分割，一共15個可配置顏色!
                         <br>依次是：背景色，文字顏色，鏈接顏色，分組標題背景色，分組標題顏色，當前分組標題顏色，當前集數顏色，集數列表滾動條凸出部分的顏色，滾動條上下按鈕上三角箭頭的顏色，滾動條的背景顏色，滾動條空白部分的顏色，滾動條立體滾動條陰影的顏色 ，滾動條亮邊的顏色，滾動條強陰影的顏色，滾動條的基本顏色',
 
 
@@ -1170,13 +1186,13 @@ https://www.baidu.com/123.jpg
     'admin/system/configuser/login_verify'=>'登錄驗證碼',
     'admin/system/configuser/reg_points'=>'註冊贈分',
     'admin/system/configuser/reg_points_tip'=>'用戶註冊成功後默認贈送積分',
-    'admin/system/configuser/reg_num'=>'每IP限制',
-    'admin/system/configuser/reg_num_tip'=>'每個IP每日限制註冊次數',
+    'admin/system/configuser/reg_num'=>'每IP限製',
+    'admin/system/configuser/reg_num_tip'=>'每個IP每日限製註冊次數',
     'admin/system/configuser/invite_reg_points'=>'邀請註冊積分',
     'admin/system/configuser/invite_reg_points_tip'=>'成功邀請用戶賺取獎勵積分',
     'admin/system/configuser/invite_visit_points'=>'推廣訪問積分',
     'admin/system/configuser/invite_visit_points_tip'=>'成功邀請訪問賺取獎勵積分',
-    'admin/system/configuser/invite_visit_num_tip'=>'每個IP每日限制可以獲取幾次推廣訪問積分',
+    'admin/system/configuser/invite_visit_num_tip'=>'每個IP每日限製可以獲取幾次推廣訪問積分',
     'admin/system/configuser/reward_status'=>'三級分銷狀態',
     'admin/system/configuser/reward_ratio'=>'一級提成比例',
     'admin/system/configuser/reward_ratio2'=>'二級提成比例',
@@ -1298,7 +1314,7 @@ https://www.baidu.com/123.jpg
     'admin/system/configsms/type'=>'服務商',
     'admin/system/configsms/sign'=>'短信簽名',
     'admin/system/configsms/tpl_code_reg'=>'註冊模板編號',
-    'admin/system/configsms/tpl_code_tip'=>'模板編號需要在服務商短信控制臺中申請',
+    'admin/system/configsms/tpl_code_tip'=>'模板編號需要在服務商短信控製臺中申請',
     'admin/system/configsms/tpl_code_bind'=>'綁定模板編號',
     'admin/system/configsms/tpl_code_findpass'=>'找回密碼模板編號',
     'admin/system/configsms/test_err'=>'發生錯誤，請檢查是否開啟相應擴展庫!',
@@ -1341,7 +1357,7 @@ https://www.baidu.com/123.jpg
     'admin/admin/title'=>'管理員管理',
     'admin/admin/del_cur_err'=>'禁止刪除當前登錄賬號',
     'admin/admin/popedom_tip'=>'提示：<br>
-                    1.權限控制精準到每個操作，創始人ID為1的管理員擁有所有權限。
+                    1.權限控製精準到每個操作，創始人ID為1的管理員擁有所有權限。
                     2.--開頭的是頁面內按鈕操作選項。',
 
 
@@ -1397,7 +1413,7 @@ https://www.baidu.com/123.jpg
     'admin/domain/title'=>'站群管理',
     'admin/domain/help_tip'=>'提示信息：<br>
                         1，此功能支持非靜態模式下同1個數據庫不同域名顯示不同的模板和網站配置信息<br>
-                        2，不限制域名網站數量<br>
+                        2，不限製域名網站數量<br>
                         3，導入文本格式是：域名$網站名稱$關鍵字$描述$模板$模板目錄$廣告目錄。每行一個網站。清空原有數據。<br>',
 
     'admin/domain/title'=>'站群管理',
@@ -1596,7 +1612,7 @@ https://www.baidu.com/123.jpg
     'admin/group/pack_year'=>'包年',
     'admin/group/popedom'=>'相關權限',
     'admin/group/popedom_tip'=>'提示：<br>
-                    1.列表頁、內容頁、播放頁、下載頁4個權限，控制是否可以進入頁面，沒權限會直接返回提示信息。<br>
+                    1.列表頁、內容頁、播放頁、下載頁4個權限，控製是否可以進入頁面，沒權限會直接返回提示信息。<br>
                     2.試看權限：如果沒有訪問播放頁的權限、或者有權限但是需要積分購買的數據，開啟了試看權限也是可以進入頁面的。',
     'admin/group/popedom_list'=>'列表頁',
     'admin/group/popedom_detail'=>'內容頁',
@@ -1693,17 +1709,30 @@ https://www.baidu.com/123.jpg
                         <br>
                         5.清空數據ID重新從1開始
                         TRUNCATE {pre}vod',
-    'admin/database/exec'=>'確認執行',
-    'admin/database/inspect'=>'掛馬檢測',
-    'admin/database/inspect_tip'=>'<strong>掛馬檢測1.0版本</strong><br>
+
+    'admin/safety/data_inspect'=>'掛馬檢測',
+    'admin/safety/data_inspect_tip'=>'<strong>掛馬檢測3.0版本</strong><br>
                             1，將對分類表，視頻表，文章表，會員表等表結構進行檢查。<br>
                             2，檢測包含script,iframe等特殊字符串。<br>
                             3，將自動清除掛馬代碼。<br>
                             4，不能保證100%清除，如還有問題請自行進入phpmyadmin或其他數據庫管理工具裏清除。<br>
                             5，建議清理多次，直到沒有出現問題數據。',
-    'admin/database/clear_ok'=>'清理結束,請再次執行,以免有漏掉的數據',
-    'admin/database/check_tip1'=>'開始檢測%s表...',
-    'admin/database/check_tip2'=>'共檢測到%s條危險數據...',
+    'admin/safety/data_clear_ok'=>'清理結束,請再次執行,以免有漏掉的數據',
+    'admin/safety/data_check_tip1'=>'開始檢測%s表...',
+    'admin/safety/data_check_tip2'=>'共檢測到%s條危險數據...',
+
+    'admin/safety/exec'=>'確認執行',
+    'admin/safety/file_inspect'=>'文件安全檢測',
+    'admin/safety/file_inspect_tip'=>'<strong>安全檢測3.0版本</strong><br>
+                            1，將對網站內所有文件進行比對篩選進行檢查。<br>
+                            2，將原版程序包內自帶文件將比對md5羅列出。<br>
+                            3，將原版程序包內沒有的新增文件羅列出。<br>
+                            4，不能保證100%正確，如還有問題請到官網github提報。<br>
+                            5，建議多次檢測，詳細檢查每個羅列出的文件。',
+    'admin/safety/file_msg1'=>'獲取官方文件數據失敗，請重試',
+    'admin/safety/file_msg2'=>'獲取本地文件列表失敗，請重試',
+    'admin/safety/file_msg3'=>'新增文件',
+    'admin/safety/file_msg4'=>'差異文件',
 
     'admin/link/title'=>'友情鏈接管理',
     'admin/link/text_link'=>'文字鏈接',
@@ -1835,6 +1864,9 @@ https://www.baidu.com/123.jpg
     'admin/urlsend/page_send_num'=>'每頁推送數',
     'admin/urlsend/start_page'=>'起始頁碼',
     'admin/urlsend/in_break_point_exec'=>'進入斷點繼續執行',
+    'admin/urlsend/send_range'=>'推送範圍',
+    'admin/urlsend/add_update'=>'新增+更新',
+    'admin/urlsend/add'=>'新增',
 
     'admin/user/title'=>'用戶管理',
     'admin/user/comment_record'=>'評論記錄',
@@ -1888,14 +1920,14 @@ https://www.baidu.com/123.jpg
     'install/lang_tip'=>'請根據自己身需要選擇後臺語言包',
 
     'install/user_agreement_title'=>'蘋果CMS用戶協議 適用於所有用戶',
-    'install/user_agreement'=>' 請您在使用(蘋果CMS)前仔細閱讀如下條款。包括免除或者限制作者責任的免責條款及對用戶的權利限制。您的安裝使用行為將視為對本《用戶許可協議》的接受，並同意接受本《用戶許可協議》各項條款的約束。 <br /><br />
+    'install/user_agreement'=>' 請您在使用(蘋果CMS)前仔細閱讀如下條款。包括免除或者限製作者責任的免責條款及對用戶的權利限製。您的安裝使用行為將視為對本《用戶許可協議》的接受，並同意接受本《用戶許可協議》各項條款的約束。 <br /><br />
                 一、安裝和使用： <br />
-                (蘋果CMS)是免費和開源提供給您使用的，您可安裝無限制數量副本。 您必須保證在不進行非法活動，不違反所在國家相關政策法規的前提下使用本軟件。 <br /><br />
+                (蘋果CMS)是免費和開源提供給您使用的，您可安裝無限製數量副本。 您必須保證在不進行非法活動，不違反所在國家相關政策法規的前提下使用本軟件。 <br /><br />
                 二、免責聲明：  <br />
                 本軟件並無附帶任何形式的明示的或暗示的保證，包括任何關於本軟件的適用性, 無侵犯知識產權或適合作某一特定用途的保證。  <br />
                 在任何情況下，對於因使用本軟件或無法使用本軟件而導致的任何損害賠償，作者均無須承擔法律責任。作者不保證本軟件所包含的資料,文字、圖形、鏈接或其它事項的準確性或完整性。作者可隨時更改本軟件，無須另作通知。  <br />
-                所有由用戶自己制作、下載、使用的第三方信息數據和插件所引起的一切版權問題或糾紛，本軟件概不承擔任何責任。<br /><br />
-                三、協議規定的約束和限制：  <br />
+                所有由用戶自己製作、下載、使用的第三方信息數據和插件所引起的一切版權問題或糾紛，本軟件概不承擔任何責任。<br /><br />
+                三、協議規定的約束和限製：  <br />
                 禁止去除(蘋果CMS)源碼裏的版權信息，商業授權版本可去除後臺界面及前臺界面的相關版權信息。</br>
                 禁止在(蘋果CMS)整體或任何部分基礎上發展任何派生版本、修改版本或第三方版本用於重新分發。</br></br>
                 <strong>版權所有 (c) 2020，蘋果CMS,保留所有權利</strong>。',
@@ -1966,7 +1998,7 @@ https://www.baidu.com/123.jpg
     'install/php'=>'php版本',
     'install/gd'=>'GD庫',
 
-    'install/not_limited'=>'不限制',
+    'install/not_limited'=>'不限製',
     'install/not_installed'=>'未安裝',
     'install/read_and_write'=>'讀寫',
     'install/not_writable'=>'不可寫',

@@ -121,6 +121,8 @@ class Website extends Base {
         $pageurl = $lp['pageurl'];
         $level = $lp['level'];
         $wd = $lp['wd'];
+        $tag = $lp['tag'];
+        $class = $lp['class'];
         $name = $lp['name'];
         $area = $lp['area'];
         $lang = $lp['lang'];
@@ -139,8 +141,8 @@ class Website extends Base {
         $cachetime = $lp['cachetime'];
         $typenot = $lp['typenot'];
         $refermonth = $lp['refermonth'];
-        $referweek = $lp['refermonth'];
-        $referday = $lp['refermonth'];
+        $referweek = $lp['referweek'];
+        $referday = $lp['referday'];
         $refer = $lp['refer'];
 
         $page = 1;
@@ -158,6 +160,7 @@ class Website extends Base {
         }
         $param = mac_param_url();
         if($paging=='yes') {
+            $param = mac_search_len_check($param);
             $totalshow = 1;
             if(!empty($param['id'])) {
                 //$type = intval($param['id']);
@@ -184,6 +187,15 @@ class Website extends Base {
             }
             if(!empty($param['wd'])) {
                 $wd = $param['wd'];
+            }
+            if(!empty($param['name'])) {
+                $name = $param['name'];
+            }
+            if(!empty($param['tag'])) {
+                $tag = $param['tag'];
+            }
+            if(!empty($param['class'])) {
+                $class = $param['class'];
             }
             if(!empty($param['by'])){
                 $by = $param['by'];
@@ -360,6 +372,12 @@ class Website extends Base {
         if(!empty($wd)) {
             $where['website_name|website_en'] = ['like', '%' . $wd . '%'];
         }
+        if(!empty($tag)) {
+            $where['website_tag'] = ['like', mac_like_arr($tag),'OR'];
+        }
+        if(!empty($class)) {
+            $where['website_class'] = ['like',mac_like_arr($class),'OR'];
+        }
         if($by=='rnd'){
             $data_count = $this->countData($where);
             $page_total = floor($data_count / $lp['num']) + 1;
@@ -372,7 +390,7 @@ class Website extends Base {
             $order = 'desc';
         }
 
-        if(!in_array($by, ['id', 'time','time_add','score','hits','hits_day','hits_week','hits_month','up','down','level','rnd','in'])) {
+        if(!in_array($by, ['id', 'time','time_add','score','hits','hits_day','hits_week','hits_month','up','down','level','rnd','in','referer','referer_day','referer_week','referer_month'])) {
             $by = 'time';
         }
         if(!in_array($order, ['asc', 'desc'])) {
@@ -484,6 +502,30 @@ class Website extends Base {
         unset($data['uptime']);
         unset($data['uptag']);
 
+        // xss过滤
+        $filter_fields = [
+            'website_name',
+            'website_sub',
+            'website_en',
+            'website_color',
+            'website_jumpurl',
+            'website_pic',
+            'website_logo',
+            'website_area',
+            'website_lang',
+            'website_tag',
+            'website_class',
+            'website_remarks',
+            'website_tpl',
+            'website_blurb',
+        ];
+        foreach ($filter_fields as $filter_field) {
+            if (!isset($data[$filter_field])) {
+                continue;
+            }
+            $data[$filter_field] = mac_filter_xss($data[$filter_field]);
+        }
+
         if(!empty($data['website_id'])){
             $where=[];
             $where['website_id'] = ['eq',$data['website_id']];
@@ -548,7 +590,7 @@ class Website extends Base {
         return ['code'=>1,'msg'=>lang('set_ok')];
     }
 
-    public function updateToday($flag='art')
+    public function updateToday($flag='website')
     {
         $today = strtotime(date('Y-m-d'));
         $where = [];
@@ -569,11 +611,7 @@ class Website extends Base {
 
     public function visit($param)
     {
-        $ip = sprintf('%u', ip2long(request()->ip()));
-        if ($ip > 2147483647) {
-            $ip = 0;
-        }
-
+        $ip = mac_get_ip_long();
         $max_cc = $GLOBALS['config']['website']['refer_visit_num'];
         if(empty($max_cc)){
             $max_cc=1;

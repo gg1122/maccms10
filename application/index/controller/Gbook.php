@@ -1,6 +1,5 @@
 <?php
 namespace app\index\controller;
-use think\Controller;
 
 class Gbook extends Base
 {
@@ -35,14 +34,6 @@ class Gbook extends Base
     }
 
     public function report()
-    {
-        $param = mac_param_url();
-        $this->assign('param',$param);
-        $this->assign('gbook',$GLOBALS['config']['gbook']);
-        return $this->label_fetch('gbook/report');
-    }
-
-    public function error()
     {
         $param = mac_param_url();
         $this->assign('param',$param);
@@ -100,11 +91,7 @@ class Gbook extends Base
             $param['gbook_status'] = 0;
         }
 
-        $ip = sprintf('%u',ip2long(request()->ip()));
-        if($ip>2147483647){
-            $ip=0;
-        }
-        $param['gbook_ip'] = $ip;
+        $param['gbook_ip'] = mac_get_ip_long();
 
         $res = model('Gbook')->saveData($param);
 

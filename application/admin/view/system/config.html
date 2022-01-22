@@ -261,12 +261,65 @@
                             <input type="radio" name="app[compress]" value="1" title="{:lang('open')}" {if condition="$config['app']['compress'] eq 1"}checked {/if}>
                         </div>
                     </div>
+                <div class="layui-form-item layui-hide">
+                    <label class="layui-form-label">{:lang('admin/system/config/input_type')}：</label>
+                    <div class="layui-input-inline w600">
+                        <input type="radio" name="app[input_type]" value="1" title="{:lang('get+post')}" {if condition="$config['app']['input_type'] neq 0"}checked {/if}>
+                        <input type="radio" name="app[input_type]" value="0" title="{:lang('get')}" {if condition="$config['app']['input_type'] eq 0"}checked {/if}>
+                    </div>
+                    <div class="layui-form-mid layui-word-aux">{:lang('admin/system/config/input_type_tip')}</div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">{:lang('admin/system/config/ajax_page')}：</label>
+                    <div class="layui-input-inline w600">
+                        <input type="radio" name="app[ajax_page]" value="0" title="{:lang('close')}" {if condition="$config['app']['ajax_page'] neq 1"}checked {/if}>
+                        <input type="radio" name="app[ajax_page]" value="1" title="{:lang('open')}" {if condition="$config['app']['ajax_page'] eq 1"}checked {/if}>
+                    </div>
+                    <div class="layui-form-mid layui-word-aux">{:lang('admin/system/config/ajax_page_tip')}</div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">{:lang('admin/system/config/wall_filter')}：</label>
+                    <div class="layui-input-inline w600">
+                        <input type="radio" name="app[wall_filter]" value="0" title="{:lang('close')}" {if condition="$config['app']['wall_filter'] neq 1 && $config['app']['wall_filter'] neq 2"}checked {/if}>
+                        <input type="radio" name="app[wall_filter]" value="1" title="{:lang('admin/system/config/wall_unicode')}" {if condition="$config['app']['wall_filter'] eq 1"}checked {/if}>
+                        <input type="radio" name="app[wall_filter]" value="2" title="{:lang('admin/system/config/wall_blank')}" {if condition="$config['app']['wall_filter'] eq 2"}checked {/if}>
+                    </div>
+                    <div class="layui-form-mid layui-word-aux">{:lang('admin/system/config/wall_filter_tip')}</div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">{:lang('admin/system/config/show')}：</label>
+                    <div class="layui-input-block">
+                        <input type="radio" name="app[show]" value="0" title="{:lang('close')}" {if condition="$config['app']['show'] neq 1"}checked {/if}>
+                        <input type="radio" name="app[show]" value="1" title="{:lang('open')}" {if condition="$config['app']['show'] eq 1"}checked {/if}>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">{:lang('admin/system/config/show_verify')}：</label>
+                    <div class="layui-input-block">
+                        <input type="radio" name="app[show_verify]" value="0" title="{:lang('close')}" {if condition="$config['app']['show_verify'] neq 1"}checked {/if}>
+                        <input type="radio" name="app[show_verify]" value="1" title="{:lang('open')}" {if condition="$config['app']['show_verify'] eq 1"}checked {/if}>
+                    </div>
+                </div>
                 <div class="layui-form-item">
                     <label class="layui-form-label">{:lang('admin/system/config/search')}：</label>
                     <div class="layui-input-block">
                         <input type="radio" name="app[search]" value="0" title="{:lang('close')}" {if condition="$config['app']['search'] neq 1"}checked {/if}>
                         <input type="radio" name="app[search]" value="1" title="{:lang('open')}" {if condition="$config['app']['search'] eq 1"}checked {/if}>
                     </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">{:lang('admin/system/config/search_verify')}：</label>
+                    <div class="layui-input-block">
+                        <input type="radio" name="app[search_verify]" value="0" title="{:lang('close')}" {if condition="$config['app']['search_verify'] neq 1"}checked {/if}>
+                        <input type="radio" name="app[search_verify]" value="1" title="{:lang('open')}" {if condition="$config['app']['search_verify'] eq 1"}checked {/if}>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">{:lang('admin/system/config/search_len')}：</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="app[search_len]" placeholder="" value="{$config['app']['search_len']}" class="layui-input w150">
+                    </div>
+                    <div class="layui-form-mid layui-word-aux">{:lang('admin/system/config/search_len_tip')}</div>
                 </div>
                 <div class="layui-form-item">
                     <label class="layui-form-label">{:lang('admin/system/config/search_timespan')}：</label>
@@ -558,7 +611,7 @@
             var left = e.clientX+document.body.scrollLeft+20;
             var top = e.clientY+document.body.scrollTop+20;
             $(".showpic").css({left:left,top:top,display:""});
-            if(imgsrc.indexOf('://')<0){ imgsrc = ROOT_PATH + '/' + imgsrc;	} else{ imgsrc = imgsrc.replace('mac:','http:'); }
+            if(imgsrc.indexOf('://')<0){ imgsrc = ROOT_PATH + '/' + imgsrc; } else{ imgsrc = imgsrc.replace('mac:','http:'); }
             $(".showpic_img").attr("src", imgsrc);
         },function (e){
             $(".showpic").css("display","none");

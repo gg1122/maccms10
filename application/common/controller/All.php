@@ -150,12 +150,27 @@ class All extends Controller
         $this->assign('comment',$comment);
     }
 
-    protected function label_type($view=0)
+    protected function label_search($param)
+    {
+        $param = mac_filter_words($param);
+        $param = mac_search_len_check($param);
+        // vod/search 各个参数下都可能出现回显关键词
+        if(!empty($GLOBALS['config']['app']['wall_filter'])){
+            $param = mac_escape_param($param);
+        }
+        $this->assign('param',$param);
+    }
+
+    protected function label_type($view=0, $type_id_specified = 0)
     {
         $param = mac_param_url();
+        $param = mac_filter_words($param);
+        $param = mac_search_len_check($param);
+        $info = mac_label_type($param, $type_id_specified);
+        if(!empty($GLOBALS['config']['app']['wall_filter'])){
+            $param['wd'] = mac_escape_param($param['wd']);
+        }
         $this->assign('param',$param);
-        $info = mac_label_type($param);
-
         $this->assign('obj',$info);
         if(empty($info)){
             return $this->error(lang('controller/get_type_err'));
@@ -219,6 +234,11 @@ class All extends Controller
     protected function label_role($total='')
     {
         $param = mac_param_url();
+        $param = mac_filter_words($param);
+        $param = mac_search_len_check($param);
+        if(!empty($GLOBALS['app']['wall_filter'])){
+            $param['wd'] = mac_escape_param($param['wd']);
+        }
         $this->assign('param',$param);
     }
 

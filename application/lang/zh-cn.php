@@ -7,7 +7,7 @@
 *内部处理key：开头 model/、controller/、只在模块内使用
 */
 return [
-    'lang_ver'=>'1073+',
+    'lang_ver'=>'3021+',
     'hello'  => '欢迎使用',
     'maccms_name'=>'苹果CMS-v10',
     'maccms_copyright'=>'© MacCMS All Rights Reserved.',
@@ -226,7 +226,6 @@ return [
     'birthday'=>'生日',
     'starsign'=>'星座',
     'school'=>'毕业学校',
-    'author'=>'作者',
     'view'=>'查看',
     'multi_set'=>'批量设置',
     'multi_separate_tip'=>'多个用,号分隔',
@@ -283,6 +282,7 @@ return [
     'opt_err'=>'操作失败',
     'update_ok'=>'更新成功',
     'update_err'=>'更新失败',
+    'follow_global'=>'跟随全局',
 
     'btn_save' =>'保 存',
     'btn_reset' =>'还 原',
@@ -457,6 +457,8 @@ return [
 
     'page_not_found'=>'页面不存在',
     'search_close'=>'搜索功能关闭中',
+    'show_close'=>'筛选页功能关闭中',
+    'ajax_close'=>'ajax页功能关闭中',
     'frequently'=>'请不要频繁操作',
     'search_frequently'=>'请不要频繁操作，搜索时间间隔为',
     'score_ok'=>'感谢您的参与，评分成功',
@@ -581,7 +583,8 @@ https://www.baidu.com/123.jpg
     'menu/apps'=>'应用',
     'menu/addon'=>'应用市场',
     'menu/urlsend'=>'URL推送',
-
+    'menu/safety_file'=>'文件安全检测',
+    'menu/safety_data'=>'数据挂马检测',
 
     'model/admin/update_login_err'=>'更新登录信息失败',
     'model/admin/login_ok'=>'登录成功',
@@ -599,6 +602,7 @@ https://www.baidu.com/123.jpg
     'model/cash/mush_money_err'=>'提现太多了,没有这么多积分哦！',
 
     'model/collect/flag_err'=>'flag标识错误，请勿非法请求！',
+    'model/collect/cjurl_err'=>'采集链接有误或不能为本地链接',
     'model/collect/get_html_err'=>'连接API接口失败，通常为服务器网络不稳定、IP被封、禁用相关函数！',
     'model/collect/json_err'=>'JSON格式不正确，不支持采集',
     'model/collect/xml_err'=>'XML格式不正确，不支持采集',
@@ -853,6 +857,10 @@ https://www.baidu.com/123.jpg
     'admin/system/config/xhx'=>'下横线_',
     'admin/system/config/suffix'=>'页面后缀名',
 
+    'admin/system/config/wall_filter'=>'假墙防御',
+    'admin/system/config/wall_unicode'=>'编码方式',
+    'admin/system/config/wall_blank'=>'空白方式',
+    'admin/system/config/wall_filter_tip'=>'开启后将部分页面传入参数在页面展示时编码或替换为空解决假墙威胁',
     'admin/system/config/popedom_filter'=>'数据权限过滤',
     'admin/system/config/popedom_filter_tip'=>'开启后将隐藏没有权限的分类和数据',
     'admin/system/config/cache_type'=>'缓存方式',
@@ -876,11 +884,19 @@ https://www.baidu.com/123.jpg
     'admin/system/config/cache_time_page'=>'页面缓存时间',
     'admin/system/config/compress'=>'压缩页面',
     'admin/system/config/search'=>'搜索开关',
+    'admin/system/config/search_verify'=>'搜索验证码',
     'admin/system/config/search_timespan'=>'搜索间隔',
     'admin/system/config/search_timespan_tip'=>'单位秒，建议设置为3秒以上',
+    'admin/system/config/search_len'=>'搜索参数长度',
+    'admin/system/config/search_len_tip'=>'搜索页+筛选页单个参数长度限制,默认10个字符,超过自动截取。',
     'admin/system/config/404'=>'404页面',
     'admin/system/config/404_tip'=>'自定义404页面，页面放在模板的public目录下无需后缀名，默认为jump',
-
+    'admin/system/config/show'=>'筛选页开关',
+    'admin/system/config/show_verify'=>'筛选验证码',
+    'admin/system/config/input_type'=>'参数获取方式',
+    'admin/system/config/input_type_tip'=>'建议采用get方式，安全并且容易分析日志',
+    'admin/system/config/ajax_page'=>'预留ajax开关',
+    'admin/system/config/ajax_page_tip'=>'系统每个页面请求都预留对应的ajax方法，不需要建议关闭。例如：vod/search和vod/ajax_search',
     'admin/system/config/search_vod_rule'=>'视频搜索规则',
     'admin/system/config/search_rule_tip'=>'注意，仅影响wd参数，勾选过多影响性能，建议3个以内',
     'admin/system/config/search_art_rule'=>'文章搜索规则',
@@ -919,7 +935,7 @@ https://www.baidu.com/123.jpg
     'admin/system/config/vod_extend_year'=>'视频年代',
     'admin/system/config/actor_extend_area'=>'演员地区',
     'admin/system/config/filter_words'=>'词语过滤',
-    'admin/system/config/filter_words_tip'=>'用户交互如评论留言的禁用词汇；多个用,号分隔',
+    'admin/system/config/filter_words_tip'=>'应用于搜索参数、评论、留言的禁用词汇；多个用,号分隔',
     'admin/system/config/extra_var'=>'自定义参数',
     'admin/system/config/extra_var_tip'=>'每行一个变量,例如aa$$$我是老王；模板调用方法$GLOBALS[\'config\'][\'extra\'][\'aa\']',
     'admin/system/config/test_err'=>'发生错误，请检查是否开启扩展库和配置项!',
@@ -1580,7 +1596,6 @@ https://www.baidu.com/123.jpg
     'admin/collect/filter_code_tip'=>'过滤提示：多组地址的资源开启白名单后只会入库指定代码的地址。比如 youku,iqiyi',
     'admin/collect/test_ok'=>'测试类型成功，接口类型',
 
-
     'admin/comment/title'=>'评论管理',
 
     'admin/gbook/title'=>'留言本管理',
@@ -1693,17 +1708,30 @@ https://www.baidu.com/123.jpg
                         <br>
                         5.清空数据ID重新从1开始
                         TRUNCATE {pre}vod',
-    'admin/database/exec'=>'确认执行',
-    'admin/database/inspect'=>'挂马检测',
-    'admin/database/inspect_tip'=>'<strong>挂马检测1.0版本</strong><br>
+
+    'admin/safety/data_inspect'=>'挂马检测',
+    'admin/safety/data_inspect_tip'=>'<strong>挂马检测3.0版本</strong><br>
                             1，将对分类表，视频表，文章表，会员表等表结构进行检查。<br>
                             2，检测包含script,iframe等特殊字符串。<br>
                             3，将自动清除挂马代码。<br>
                             4，不能保证100%清除，如还有问题请自行进入phpmyadmin或其他数据库管理工具里清除。<br>
                             5，建议清理多次，直到没有出现问题数据。',
-    'admin/database/clear_ok'=>'清理结束,请再次执行,以免有漏掉的数据',
-    'admin/database/check_tip1'=>'开始检测%s表...',
-    'admin/database/check_tip2'=>'共检测到%s条危险数据...',
+    'admin/safety/data_clear_ok'=>'清理结束,请再次执行,以免有漏掉的数据',
+    'admin/safety/data_check_tip1'=>'开始检测%s表...',
+    'admin/safety/data_check_tip2'=>'共检测到%s条危险数据...',
+
+    'admin/safety/exec'=>'确认执行',
+    'admin/safety/file_inspect'=>'文件安全检测',
+    'admin/safety/file_inspect_tip'=>'<strong>安全检测3.0版本</strong><br>
+                            1，将对网站内所有文件进行比对筛选进行检查。<br>
+                            2，将原版程序包内自带文件将比对md5罗列出。<br>
+                            3，将原版程序包内没有的新增文件罗列出。<br>
+                            4，不能保证100%正确，如还有问题请到官网github提报。<br>
+                            5，建议多次检测，详细检查每个罗列出的文件。',
+    'admin/safety/file_msg1'=>'获取官方文件数据失败，请重试',
+    'admin/safety/file_msg2'=>'获取本地文件列表失败，请重试',
+    'admin/safety/file_msg3'=>'新增文件',
+    'admin/safety/file_msg4'=>'差异文件',
 
     'admin/link/title'=>'友情链接管理',
     'admin/link/text_link'=>'文字链接',
@@ -1835,6 +1863,9 @@ https://www.baidu.com/123.jpg
     'admin/urlsend/page_send_num'=>'每页推送数',
     'admin/urlsend/start_page'=>'起始页码',
     'admin/urlsend/in_break_point_exec'=>'进入断点继续执行',
+    'admin/urlsend/send_range'=>'推送范围',
+    'admin/urlsend/add_update'=>'新增+更新',
+    'admin/urlsend/add'=>'新增',
 
     'admin/user/title'=>'用户管理',
     'admin/user/comment_record'=>'评论记录',

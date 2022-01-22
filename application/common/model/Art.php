@@ -162,6 +162,7 @@ class Art extends Base {
         }
         $param = mac_param_url();
         if($paging=='yes') {
+            $param = mac_search_len_check($param);
             $totalshow = 1;
             if(!empty($param['id'])) {
                 //$type = intval($param['id']);
@@ -499,6 +500,35 @@ class Art extends Base {
         }
         unset($data['uptime']);
         unset($data['uptag']);
+
+        // xss过滤
+        $filter_fields = [
+            'art_name',
+            'art_sub',
+            'art_en',
+            'art_color',
+            'art_from',
+            'art_author',
+            'art_tag',
+            'art_class',
+            'art_pic',
+            'art_pic_thumb',
+            'art_pic_slide',
+            'art_blurb',
+            'art_remarks',
+            'art_jumpurl',
+            'art_tpl',
+            'art_rel_art',
+            'art_rel_vod',
+            'art_pwd',
+            'art_pwd_url',
+        ];
+        foreach ($filter_fields as $filter_field) {
+            if (!isset($data[$filter_field])) {
+                continue;
+            }
+            $data[$filter_field] = mac_filter_xss($data[$filter_field]);
+        }
 
         if(!empty($data['art_id'])){
             $where=[];

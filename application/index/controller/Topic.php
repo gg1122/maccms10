@@ -19,8 +19,17 @@ class Topic extends Base
     {
         $param = mac_param_url();
         $this->check_search($param);
-        $this->assign('param',$param);
+        $this->label_search($param);
         return $this->label_fetch('topic/search');
+    }
+
+    public function ajax_search()
+    {
+        $param = mac_param_url();
+        $this->check_ajax();
+        $this->check_search($param,1);
+        $this->label_search($param);
+        return $this->label_fetch('topic/ajax_search');
     }
 
     public function detail()
@@ -31,8 +40,14 @@ class Topic extends Base
 
     public function ajax_detail()
     {
+        $this->check_ajax();
         $info = $this->label_topic_detail();
         return $this->label_fetch('topic/ajax_detail');
     }
 
+    public function rss()
+    {
+        $info = $this->label_topic_detail();
+        return $this->label_fetch('topic/rss');
+    }
 }

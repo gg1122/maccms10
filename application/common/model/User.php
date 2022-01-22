@@ -26,7 +26,7 @@ class User extends Base
         return $total;
     }
 
-    public function listData($where, $order, $page, $limit = 20)
+    public function listData($where, $order, $page = 1, $limit = 20, $start = 0)
     {
         $total = $this->where($where)->count();
         $list = Db::name('User')->where($where)->order($order)->page($page)->limit($limit)->select();
@@ -119,11 +119,13 @@ class User extends Base
         $config = config('maccms');
 
         $data = [];
+        $password_raw = trim($param['user_pwd']);
         $data['user_name'] = htmlspecialchars(urldecode(trim($param['user_name'])));
         $data['user_pwd'] = htmlspecialchars(urldecode(trim($param['user_pwd'])));
         $data['user_pwd2'] = htmlspecialchars(urldecode(trim($param['user_pwd2'])));
         $data['verify'] = $param['verify'];
         $uid = $param['uid'];
+        $is_from_3rdparty = !empty($param['user_openid_qq']) || !empty($param['user_openid_weixin']);
 
 
         if ($config['user']['status'] == 0 || $config['user']['reg_open'] == 0) {
@@ -132,8 +134,7 @@ class User extends Base
         if (empty($data['user_name']) || empty($data['user_pwd']) || empty($data['user_pwd2'])) {
             return ['code' => 1002, 'msg' => lang('model/user/input_require')];
         }
-        if (empty($param['user_openid_qq']) && empty($param['user_openid_weixin'])
-            && !captcha_check($data['verify']) &&  $config['user']['reg_verify']==1) {
+        if (!$is_from_3rdparty && !captcha_check($data['verify']) && $config['user']['reg_verify'] == 1) {
             return ['code' => 1003, 'msg' => lang('verify_err')];
         }
         if ($data['user_pwd'] != $data['user_pwd2']) {
@@ -161,27 +162,20 @@ class User extends Base
             }
         }
 
-        $ip = sprintf('%u',ip2long(request()->ip()));
-        if($ip>2147483647){
-            $ip=0;
-        }
-
-
-
+        $ip = mac_get_ip_long();
         if( $GLOBALS['config']['user']['reg_num'] > 0){
             $where2=[];
-            $where2['user_reg_ip'] =['eq',$ip];
+            $where2['user_reg_ip'] = ['eq', $ip];
+            $where2['user_reg_time'] = ['gt', strtotime('today')];
             $cc = $this->where($where2)->count();
             if($cc >= $GLOBALS['config']['user']['reg_num']){
                 return ['code' => 1009, 'msg' => lang('model/user/ip_limit',[$GLOBALS['config']['user']['reg_num']])];
             }
         }
 
-
-
         $fields = [];
         $fields['user_name'] = $data['user_name'];
-        $fields['user_pwd'] = md5($data['user_pwd']);
+        $fields['user_pwd'] = md5($password_raw);
         $fields['group_id'] = $this->_def_group;
         $fields['user_points'] = intval($config['user']['reg_points']);
         $fields['user_status'] = intval($config['user']['reg_status']);
@@ -190,43 +184,46 @@ class User extends Base
         $fields['user_openid_qq'] = (string)$param['user_openid_qq'];
         $fields['user_openid_weixin'] = (string)$param['user_openid_weixin'];
 
-        if($config['user']['reg_phone_sms'] == '1'){
-            $param['type'] = 3;
-            $res = $this->check_msg($param);
-            if($res['code'] >1){
-                return ['code'=>$res['code'],'msg'=>$res['msg']];
-            }
-            $fields['user_phone'] = $param['to'];
+        if (!$is_from_3rdparty) {
+            // https://github.com/magicblack/maccms10/issues/418
+            if($config['user']['reg_phone_sms'] == '1'){
+                $param['type'] = 3;
+                $res = $this->check_msg($param);
+                if($res['code'] >1){
+                    return ['code'=>$res['code'],'msg'=>$res['msg']];
+                }
+                $fields['user_phone'] = $param['to'];
 
-            $update=[];
-            $update['user_phone'] = '';
-            $where2=[];
-            $where2['user_phone'] = $param['to'];
+                $update=[];
+                $update['user_phone'] = '';
+                $where2=[];
+                $where2['user_phone'] = $param['to'];
 
-            $row = $this->where($where2)->find();
-            if (!empty($row)) {
-                return ['code' => 1011, 'msg' =>lang('model/user/phone_haved')];
+                $row = $this->where($where2)->find();
+                if (!empty($row)) {
+                    return ['code' => 1011, 'msg' =>lang('model/user/phone_haved')];
+                }
+                //$this->where($where2)->update($update);
             }
-            //$this->where($where2)->update($update);
-        }
-        elseif($config['user']['reg_email_sms'] == '1'){
-            $param['type'] = 3;
-            $res = $this->check_msg($param);
-            if($res['code'] >1){
-                return ['code'=>$res['code'],'msg'=>$res['msg']];
-            }
-            $fields['user_email'] = $param['to'];
+            elseif($config['user']['reg_email_sms'] == '1'){
+                $param['type'] = 3;
+                $res = $this->check_msg($param);
+                if($res['code'] >1){
+                    return ['code'=>$res['code'],'msg'=>$res['msg']];
+                }
+                $fields['user_email'] = $param['to'];
 
-            $update=[];
-            $update['user_email'] = '';
-            $where2=[];
-            $where2['user_email'] = $param['to'];
+                $update=[];
+                $update['user_email'] = '';
+                $where2=[];
+                $where2['user_email'] = $param['to'];
 
-            $row = $this->where($where2)->find();
-            if (!empty($row)) {
-                return ['code' => 1012, 'msg' => lang('model/user/email_haved')];
+                $row = $this->where($where2)->find();
+                if (!empty($row)) {
+                    return ['code' => 1012, 'msg' => lang('model/user/email_haved')];
+                }
+                //$this->where($where2)->update($update);
             }
-            //$this->where($where2)->update($update);
         }
 
         $res = $this->insert($fields);
@@ -295,7 +292,9 @@ class User extends Base
         if (empty($param['user_pwd'])) {
             return ['code' => 1001, 'msg' => lang('model/user/input_old_pass')];
         }
-        if (md5($param['user_pwd']) != $GLOBALS['user']['user_pwd']) {
+        $password_raw = trim($param['user_pwd']);
+        $password_formatted = htmlspecialchars(urldecode(trim($param['user_pwd'])));
+        if (!in_array($GLOBALS['user']['user_pwd'], [md5($password_raw), md5($password_formatted)])) {
             return ['code' => 1002, 'msg' => lang('model/user/old_pass_err')];
         }
         if ($param['user_pwd1'] != $param['user_pwd2']) {
@@ -312,7 +311,7 @@ class User extends Base
         $data['user_question'] = htmlspecialchars(urldecode(trim($param['user_question'])));
         $data['user_answer'] = htmlspecialchars(urldecode(trim($param['user_answer'])));
         if (!empty($param['user_pwd2'])) {
-            $data['user_pwd'] = htmlspecialchars(urldecode(trim($param['user_pwd2'])));
+            $data['user_pwd'] = trim($param['user_pwd2']);
         }
         return $this->saveData($data);
     }
@@ -320,6 +319,7 @@ class User extends Base
     public function login($param)
     {
         $data = [];
+        $password_raw = trim($param['user_pwd']);
         $data['user_name'] = htmlspecialchars(urldecode(trim($param['user_name'])));
         $data['user_pwd'] = htmlspecialchars(urldecode(trim($param['user_pwd'])));
         $data['verify'] = $param['verify'];
@@ -330,25 +330,24 @@ class User extends Base
             if (empty($data['user_name']) || empty($data['user_pwd'])) {
                 return ['code' => 1001, 'msg' => lang('model/user/input_require')];
             }
-
             if ($GLOBALS['config']['user']['login_verify'] ==1 && !captcha_check($data['verify'])) {
                 return ['code' => 1002, 'msg' => lang('verify_err')];
             }
-
-            $pwd = md5($data['user_pwd']);
             $where = [];
-
             $pattern = '/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/';
             if (!preg_match($pattern, $data['user_name'])) {
                 $where['user_name'] = ['eq', $data['user_name']];
             } else {
                 $where['user_email'] = ['eq', $data['user_name']];
             }
-
-            $where['user_pwd'] = ['eq', $pwd];
+            // https://github.com/magicblack/maccms10/issues/781 兼容密码
+            $where['user_pwd'] = [['eq', md5($password_raw)], ['eq', $data['user_pwd']], 'or'];
         } else {
             if (empty($data['openid']) || empty($data['col'])) {
                 return ['code' => 1001, 'msg' => lang('model/user/input_require')];
+            }
+            if (!in_array($data['col'], ['user_openid_qq', 'user_openid_weixin'])) {
+                return ['code' => 1002, 'msg' => lang('param_err') . ': col'];
             }
             $where[$data['col']] = $data['openid'];
         }
@@ -365,12 +364,8 @@ class User extends Base
         }
 
         $random = md5(rand(10000000, 99999999));
-        $ip = sprintf('%u',ip2long(request()->ip()));
-        if($ip>2147483647){
-            $ip=0;
-        }
         $update['user_random'] = $random;
-        $update['user_login_ip'] = $ip;
+        $update['user_login_ip'] = mac_get_ip_long();
         $update['user_login_time'] = time();
         $update['user_login_num'] = $row['user_login_num'] + 1;
         $update['user_last_login_time'] = $row['user_login_time'];
@@ -389,7 +384,7 @@ class User extends Base
         cookie('user_name', $row['user_name'],['expire'=>2592000] );
         cookie('group_id', $group['group_id'],['expire'=>2592000] );
         cookie('group_name', $group['group_name'],['expire'=>2592000] );
-        cookie('user_check', md5($random . '-' .$row['user_name'] . '-' . $row['user_id'] .'-'.request()->ip() ),['expire'=>2592000] );
+        cookie('user_check', md5($random . '-' .$row['user_name'] . '-' . $row['user_id'] .'-' ),['expire'=>2592000] );
         cookie('user_portrait', mac_get_user_portrait($row['user_id']),['expire'=>2592000] );
 
         return ['code' => 1, 'msg' => lang('model/user/login_ok')];
@@ -446,7 +441,7 @@ class User extends Base
             return ['code' => 1002, 'msg' => lang('model/user/not_login')];
         }
         $info = $info->toArray();
-        $login_check = md5($info['user_random'] . '-' . $info['user_name']. '-' . $info['user_id'] .'-'.request()->ip() );
+        $login_check = md5($info['user_random'] . '-' . $info['user_name']. '-' . $info['user_id'] .'-' );
         if($login_check != $user_check) {
             return ['code' => 1003, 'msg' => lang('model/user/not_login')];
         }
@@ -483,6 +478,7 @@ class User extends Base
     public function findpass($param)
     {
         $data = [];
+        $password_raw = trim($param['user_pwd']);
         $data['user_name'] = htmlspecialchars(urldecode(trim($param['user_name'])));
         $data['user_question'] = htmlspecialchars(urldecode(trim($param['user_question'])));
         $data['user_answer'] = htmlspecialchars(urldecode(trim($param['user_answer'])));
@@ -514,7 +510,7 @@ class User extends Base
         }
 
         $update = [];
-        $update['user_pwd'] = md5($data['user_pwd']);
+        $update['user_pwd'] = md5($password_raw);
 
         $where = [];
         $where['user_id'] = $info['user_id'];
@@ -670,6 +666,7 @@ class User extends Base
             View::instance()->assign(['code'=>$code,'time'=>$GLOBALS['config']['email']['time']]);
             $title =  View::instance()->display($title);
             $msg =  View::instance()->display($msg);
+            $msg = htmlspecialchars_decode($msg);
             $res_send = mac_send_mail($to, $title, $msg);
             $res_code = $res_send['code'];
             $res_msg = $res_send['msg'];
@@ -778,11 +775,13 @@ class User extends Base
             $to = htmlspecialchars(urldecode(trim($param['to'])));
         }
 
+        $password_raw = trim($param['user_pwd']);
         $param['code'] = htmlspecialchars(urldecode(trim($param['code'])));
         $param['user_pwd'] = htmlspecialchars(urldecode(trim($param['user_pwd'])));
         $param['user_pwd2'] = htmlspecialchars(urldecode(trim($param['user_pwd2'])));
 
-        if (strlen($param['user_pwd']) <6) {
+
+        if (strlen($param['user_pwd']) < 6) {
             return ['code' => 2002, 'msg' => lang('model/user/pass_length_err')];
         }
         if ($param['user_pwd'] != $param['user_pwd2']) {
@@ -823,9 +822,8 @@ class User extends Base
             }
         }
 
-        $update=[];
-        $update['user_pwd'] = md5($param['user_pwd']);
-
+        $update = [];
+        $update['user_pwd'] = md5($password_raw);
         $res = $this->where($where)->update($update);
         if($res===false){
             return ['code'=>2009,'msg'=>lang('model/user/pass_reset_err')];
@@ -840,11 +838,7 @@ class User extends Base
             return ['code' => 101, 'msg' =>lang('model/user/id_err')];
         }
 
-        $ip = sprintf('%u', ip2long(request()->ip()));
-        if ($ip > 2147483647) {
-            $ip = 0;
-        }
-
+        $ip = mac_get_ip_long();
         $max_cc = $GLOBALS['config']['user']['invite_visit_num'];
         if(empty($max_cc)){
             $max_cc=1;
@@ -940,4 +934,5 @@ class User extends Base
 
         return ['code'=>1,'msg'=>lang('model/user/reward_ok')];
     }
+
 }

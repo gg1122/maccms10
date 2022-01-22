@@ -48,7 +48,8 @@ class Art extends Base
         if(!empty($param['repeat'])){
             if($param['page'] ==1){
                 Db::execute('DROP TABLE IF EXISTS '.config('database.prefix').'tmpart');
-                Db::execute('CREATE TABLE IF NOT EXISTS `'.config('database.prefix').'tmpart` ENGINE=MyISAM as (SELECT min(art_id)as id1,art_name as name1 FROM '.config('database.prefix').'art GROUP BY name1 HAVING COUNT(name1)>1)');
+                Db::execute('CREATE TABLE `'.config('database.prefix').'tmpart` (`id1` int unsigned DEFAULT NULL, `name1` varchar(1024) NOT NULL DEFAULT \'\') ENGINE=MyISAM');
+                Db::execute('INSERT INTO `'.config('database.prefix').'tmpart` (SELECT min(art_id)as id1,art_name as name1 FROM '.config('database.prefix').'art GROUP BY name1 HAVING COUNT(name1)>1)');
             }
             $order='art_name asc';
             $res = model('Art')->listRepeatData($where,$order,$param['page'],$param['limit']);
@@ -208,7 +209,7 @@ class Art extends Base
 
         $info = $res['info'];
         $this->assign('info',$info);
-        $this->assign('art_page_list',$info['art_page_list']);
+        $this->assign('art_page_list',(array)$info['art_page_list']);
 
         $type_tree = model('Type')->getCache('type_tree');
         $this->assign('type_tree',$type_tree);

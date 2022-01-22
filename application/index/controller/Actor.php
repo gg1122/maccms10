@@ -23,12 +23,21 @@ class Actor extends Base
 
     public function show()
     {
-        $info = $this->label_type();
+        $this->check_show();
+        $param = mac_param_url();
+        $type_id_specified = 0;
+        if (empty($param['id'])) {
+            $default_actor_type = model('Type')->where(['type_mid' => 8, 'type_status' => 1])->find();
+            $type_id_specified = isset($default_actor_type->type_id) ? $default_actor_type->type_id : 0;
+        }
+        $info = $this->label_type(0, $type_id_specified);
         return $this->label_fetch( mac_tpl_fetch('actor',$info['type_tpl_list'],'show') );
     }
 
     public function ajax_show()
     {
+        $this->check_ajax();
+        $this->check_show(1);
         $info = $this->label_type();
         return $this->label_fetch('actor/ajax_show');
     }
@@ -37,15 +46,16 @@ class Actor extends Base
     {
         $param = mac_param_url();
         $this->check_search($param);
-        $this->assign('param',$param);
+        $this->label_search($param);
         return $this->label_fetch('actor/search');
     }
 
     public function ajax_search()
     {
         $param = mac_param_url();
-        $this->check_search($param);
-        $this->assign('param',$param);
+        $this->check_ajax();
+        $this->check_search($param,1);
+        $this->label_search($param);
         return $this->label_fetch('actor/ajax_search');
     }
 
@@ -57,6 +67,7 @@ class Actor extends Base
 
     public function ajax_detail()
     {
+        $this->check_ajax();
         $info = $this->label_actor_detail();
         return $this->label_fetch('actor/ajax_detail');
     }

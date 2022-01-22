@@ -11,6 +11,10 @@ class Provide extends Base
     {
         parent::__construct();
         $this->_param = input('','','trim,urldecode');
+        // 因搜索兼容性问题暂时移除
+//        if(isset($GLOBALS['config']['app']['input_type']) && $GLOBALS['config']['app']['input_type'] == 0 && request()->isPost()){
+//            $this->_param = input('get.');
+//        }
     }
 
     public function index()
@@ -33,19 +37,7 @@ class Provide extends Base
             }
             else {
                 $auth = $GLOBALS['config']['api']['vod']['auth'];
-                $auths = array();
-                if(!empty($auth)){
-                    $auths = explode('#',$auth);
-                    foreach($auths as $k=>$v){
-                        $auths[$k] = gethostbyname(trim($v));
-                    }
-                }
-                if($h != 'localhost' && $h != '127.0.0.1') {
-                    if(!in_array($h, $auths)){
-                        echo lang('api/auth_err');
-                        exit;
-                    }
-                }
+                $this->checkDomainAuth($auth);
             }
         }
 
@@ -107,7 +99,7 @@ class Provide extends Base
             } else {
                 $html = json_encode($this->vod_json($res),JSON_UNESCAPED_UNICODE);
             }
-
+            $html = mac_filter_tags($html);
             if($cache_time>0) {
                 Cache::set($cach_name, $html, $cache_time);
             }
@@ -292,19 +284,7 @@ class Provide extends Base
             }
             else {
                 $auth = $GLOBALS['config']['api']['art']['auth'];
-                $auths = array();
-                if(!empty($auth)){
-                    $auths = explode('#',$auth);
-                    foreach($auths as $k=>$v){
-                        $auths[$k] = gethostbyname(trim($v));
-                    }
-                }
-                if($h != 'localhost' && $h != '127.0.0.1') {
-                    if(!in_array($h, $auths)){
-                        echo lang('api/auth_err');
-                        exit;
-                    }
-                }
+                $this->checkDomainAuth($auth);
             }
         }
 
@@ -393,7 +373,7 @@ class Provide extends Base
                 $res['class'] = $class;
             }
             $html = json_encode($res,JSON_UNESCAPED_UNICODE);
-
+            $html = mac_filter_tags($html);
             if($cache_time>0) {
                 Cache::set($cach_name, $html, $cache_time);
             }
@@ -416,19 +396,7 @@ class Provide extends Base
             }
             else {
                 $auth = $GLOBALS['config']['api']['actor']['auth'];
-                $auths = array();
-                if(!empty($auth)){
-                    $auths = explode('#',$auth);
-                    foreach($auths as $k=>$v){
-                        $auths[$k] = gethostbyname(trim($v));
-                    }
-                }
-                if($h != 'localhost' && $h != '127.0.0.1') {
-                    if(!in_array($h, $auths)){
-                        echo lang('api/auth_err');
-                        exit;
-                    }
-                }
+                $this->checkDomainAuth($auth);
             }
         }
 
@@ -517,7 +485,7 @@ class Provide extends Base
             }
 
             $html = json_encode($res,JSON_UNESCAPED_UNICODE);
-
+            $html = mac_filter_tags($html);
             if($cache_time>0) {
                 Cache::set($cach_name, $html, $cache_time);
             }
@@ -540,19 +508,7 @@ class Provide extends Base
             }
             else {
                 $auth = $GLOBALS['config']['api']['role']['auth'];
-                $auths = array();
-                if(!empty($auth)){
-                    $auths = explode('#',$auth);
-                    foreach($auths as $k=>$v){
-                        $auths[$k] = gethostbyname(trim($v));
-                    }
-                }
-                if($h != 'localhost' && $h != '127.0.0.1') {
-                    if(!in_array($h, $auths)){
-                        echo lang('api/auth_err');
-                        exit;
-                    }
-                }
+                $this->checkDomainAuth($auth);
             }
         }
 
@@ -629,7 +585,7 @@ class Provide extends Base
             }
 
             $html = json_encode($res,JSON_UNESCAPED_UNICODE);
-
+            $html = mac_filter_tags($html);
             if($cache_time>0) {
                 Cache::set($cach_name, $html, $cache_time);
             }
@@ -652,19 +608,7 @@ class Provide extends Base
             }
             else {
                 $auth = $GLOBALS['config']['api']['website']['auth'];
-                $auths = array();
-                if(!empty($auth)){
-                    $auths = explode('#',$auth);
-                    foreach($auths as $k=>$v){
-                        $auths[$k] = gethostbyname(trim($v));
-                    }
-                }
-                if($h != 'localhost' && $h != '127.0.0.1') {
-                    if(!in_array($h, $auths)){
-                        echo lang('api/auth_err');
-                        exit;
-                    }
-                }
+                $this->checkDomainAuth($auth);
             }
         }
 
@@ -753,7 +697,7 @@ class Provide extends Base
             }
 
             $html = json_encode($res,JSON_UNESCAPED_UNICODE);
-
+            $html = mac_filter_tags($html);
             if($cache_time>0) {
                 Cache::set($cach_name, $html, $cache_time);
             }
@@ -765,5 +709,26 @@ class Provide extends Base
     public function comment()
     {
 
+    }
+
+    private function checkDomainAuth($auth)
+    {
+        $ip = mac_get_client_ip();
+        $auth_list = ['127.0.0.1'];
+        if (!empty($auth)) {
+            foreach (explode('#', $auth) as $domain) {
+                $domain = trim($domain);
+                $auth_list[] = $domain;
+                if (!mac_string_is_ip($domain)) {
+                    $auth_list[] = gethostbyname($domain);
+                }
+            }
+            $auth_list = array_unique($auth_list);
+            $auth_list = array_filter($auth_list);
+        }
+        if (!in_array($ip, $auth_list)) {
+            echo lang('api/auth_err');
+            exit;
+        }
     }
 }
